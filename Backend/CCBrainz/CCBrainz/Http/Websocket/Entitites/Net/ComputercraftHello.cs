@@ -14,6 +14,9 @@ namespace CCBrainz.Websocket.Net
         [JsonProperty("owner")]
         public string Owner { get; set; }
 
+        [JsonProperty("id")]
+        public int ComputerId { get; set; }
+
         public static ComputercraftHello FromFrame(SocketFrame frame)
         {
             try

@@ -7,5 +7,6 @@ namespace CCBrainz.Websocket.Net
     public enum OpCode
     {
         Hello = 0,
+        HelloAccepted = 1,
     }
 }

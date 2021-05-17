@@ -1,4 +1,5 @@
-﻿using System;
+﻿using CCBrainz.Http.Websocket;
+using System;
 using System.Threading.Tasks;
 
 namespace CCBrainz
@@ -12,8 +13,10 @@ namespace CCBrainz
 
         public async Task MainAsync()
         {
+            var server = new WebSocketServer(3000);
 
-            await Task.Delay();
+
+            await Task.Delay(-1);
         }
     }
 }

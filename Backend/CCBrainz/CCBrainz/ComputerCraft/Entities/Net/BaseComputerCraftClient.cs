@@ -22,6 +22,8 @@ namespace CCBrainz.ComputerCraft
 
         public ConnectionType ConnectionType { get; }
 
+        public int ComputerId { get; }
+
         public bool IsAuthorized
            => MinecraftUser != null;
 
@@ -30,6 +32,7 @@ namespace CCBrainz.ComputerCraft
             this.Socket = context.WebSocket;
             this.ConnectionType = ConnectionType.ComputerCraft;
             this.MinecraftUser = hello.Owner;
+            this.ComputerId = hello.ComputerId;
         }
 
         public async Task ProcessEventAsync(SocketFrame frame)

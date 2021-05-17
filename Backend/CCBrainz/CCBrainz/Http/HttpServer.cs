@@ -50,38 +50,37 @@ namespace CCBrainz.Http
 
         private async Task HandleContext(HttpListenerContext context)
         {
-            using(var response = context.Response)
+            if (!context.Request.IsWebSocketRequest)
             {
-                if (!context.Request.IsWebSocketRequest)
-                {
-                    response.StatusCode = 400;
-                    return;
-                }
-
-                ConnectionType conType;
-
-                switch (context.Request.RawUrl)
-                {
-                    case "/cc/socket/":
-                        conType = ConnectionType.ComputerCraft;
-                        break;
-                    case "/web/socket/":
-                        conType = ConnectionType.Web;
-                        break;
-                    default:
-                        response.StatusCode = 400;
-                        return;
-                }
-
-                var socket = await context.AcceptWebSocketAsync(null).ConfigureAwait(false);
-
-                _ = Task.Run(async () =>
-                {
-                    var task = OnClient?.Invoke(socket, conType);
-                    if (task != null)
-                        await task.ConfigureAwait(false);
-                });
+                context.Response.StatusCode = 400;
+                context.Response.Close();
+                return;
             }
+
+            ConnectionType conType;
+
+            switch (context.Request.RawUrl)
+            {
+                case "/cc/socket":
+                    conType = ConnectionType.ComputerCraft;
+                    break;
+                case "/web/socket":
+                    conType = ConnectionType.Web;
+                    break;
+                default:
+                    context.Response.StatusCode = 400;
+                    context.Response.Close();
+                    return;
+            }
+
+            var socket = await context.AcceptWebSocketAsync(null).ConfigureAwait(false);
+
+            _ = Task.Run(async () =>
+            {
+                var task = OnClient?.Invoke(socket, conType);
+                if (task != null)
+                    await task.ConfigureAwait(false);
+            });
         }
     }
 }

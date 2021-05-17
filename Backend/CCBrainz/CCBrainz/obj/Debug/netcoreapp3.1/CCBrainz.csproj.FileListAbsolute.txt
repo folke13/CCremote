@@ -1,0 +1,15 @@
+C:\Users\lynch\source\repos\CCremote\Backend\CCBrainz\CCBrainz\obj\Debug\netcoreapp3.1\CCBrainz.csprojAssemblyReference.cache
+C:\Users\lynch\source\repos\CCremote\Backend\CCBrainz\CCBrainz\obj\Debug\netcoreapp3.1\CCBrainz.AssemblyInfoInputs.cache
+C:\Users\lynch\source\repos\CCremote\Backend\CCBrainz\CCBrainz\obj\Debug\netcoreapp3.1\CCBrainz.AssemblyInfo.cs
+C:\Users\lynch\source\repos\CCremote\Backend\CCBrainz\CCBrainz\obj\Debug\netcoreapp3.1\CCBrainz.csproj.CoreCompileInputs.cache
+C:\Users\lynch\source\repos\CCremote\Backend\CCBrainz\CCBrainz\bin\Debug\netcoreapp3.1\CCBrainz.exe
+C:\Users\lynch\source\repos\CCremote\Backend\CCBrainz\CCBrainz\bin\Debug\netcoreapp3.1\CCBrainz.deps.json
+C:\Users\lynch\source\repos\CCremote\Backend\CCBrainz\CCBrainz\bin\Debug\netcoreapp3.1\CCBrainz.runtimeconfig.json
+C:\Users\lynch\source\repos\CCremote\Backend\CCBrainz\CCBrainz\bin\Debug\netcoreapp3.1\CCBrainz.runtimeconfig.dev.json
+C:\Users\lynch\source\repos\CCremote\Backend\CCBrainz\CCBrainz\bin\Debug\netcoreapp3.1\CCBrainz.dll
+C:\Users\lynch\source\repos\CCremote\Backend\CCBrainz\CCBrainz\bin\Debug\netcoreapp3.1\CCBrainz.pdb
+C:\Users\lynch\source\repos\CCremote\Backend\CCBrainz\CCBrainz\bin\Debug\netcoreapp3.1\Newtonsoft.Json.dll
+C:\Users\lynch\source\repos\CCremote\Backend\CCBrainz\CCBrainz\obj\Debug\netcoreapp3.1\CCBrainz.csproj.CopyComplete
+C:\Users\lynch\source\repos\CCremote\Backend\CCBrainz\CCBrainz\obj\Debug\netcoreapp3.1\CCBrainz.dll
+C:\Users\lynch\source\repos\CCremote\Backend\CCBrainz\CCBrainz\obj\Debug\netcoreapp3.1\CCBrainz.pdb
+C:\Users\lynch\source\repos\CCremote\Backend\CCBrainz\CCBrainz\obj\Debug\netcoreapp3.1\CCBrainz.genruntimeconfig.cache

@@ -60,15 +60,24 @@ namespace CCBrainz.Http.Websocket
                     switch (computercraftHelloPacket.ClientType)
                     {
                         case "turtle":
-                            var turtle = new Turtle(arg1, computercraftHelloPacket);
-                            AddClient(turtle);
-                            await OnTurtleConnected?.Invoke(turtle);
-                            break;
+                            {
+                                var turtle = new Turtle(arg1, computercraftHelloPacket);
+                                AddClient(turtle);
+                                var task = OnTurtleConnected?.Invoke(turtle);
+                                if (task != null)
+                                    await task;
+                                break;
+                            }
                         case "computer":
-                            var computer = new Computer(arg1, computercraftHelloPacket);
-                            AddClient(computer);
-                            await OnComputerConnected?.Invoke(computer);
-                            break;
+                            {
+                                var computer = new Computer(arg1, computercraftHelloPacket);
+                                AddClient(computer);
+                                var task = OnComputerConnected?.Invoke(computer);
+                                if (task != null)
+                                    await task;
+
+                                break;
+                            }
                         default:
                             Console.WriteLine($"Unknown client type: ({computercraftHelloPacket.ClientType})");
                             goto close;
@@ -100,6 +109,10 @@ namespace CCBrainz.Http.Websocket
         private void AddClient(IWebsocketClient client)
         {
             Console.WriteLine($"New {client.ConnectionType} client: {client.MinecraftUser}");
+            client.SendAsync(new SocketFrame()
+            {
+                OpCode = OpCode.HelloAccepted,
+            }).GetAwaiter().GetResult();
             Clients.Add(client);
             _ = Task.Run(async () => await HandleClient(client).ConfigureAwait(false));
         }
