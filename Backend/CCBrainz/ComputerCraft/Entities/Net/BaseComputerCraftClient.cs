@@ -1,9 +1,11 @@
-﻿using CCBrainz.Http;
+﻿using CCBrainz.ComputerCraft.API;
+using CCBrainz.Http;
 using CCBrainz.Http.Websocket.Entitites;
 using CCBrainz.Websocket.Net;
 using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Net.WebSockets;
 using System.Text;
 using System.Threading;
@@ -27,12 +29,25 @@ namespace CCBrainz.ComputerCraft
         public bool IsAuthorized
            => MinecraftUser != null;
 
+        private List<AsyncCommand> ActiveCommands = new List<AsyncCommand>();
+
         public BaseComputerCraftClient(HttpListenerWebSocketContext context, ComputercraftHello hello)
         {
             this.Socket = context.WebSocket;
             this.ConnectionType = ConnectionType.ComputerCraft;
             this.MinecraftUser = hello.Owner;
             this.ComputerId = hello.ComputerId;
+        }
+
+        public Task<TResult> SendCommandAsync<TResult>(CCOpCode code, object payload = null) 
+        {
+            var command = new AsyncCommand(code, payload);
+
+            SendAsync(command.ToSocketFrame()).GetAwaiter().GetResult();
+
+            ActiveCommands.Add(command);
+
+            return command.GetResult<TResult>();
         }
 
         public async Task ProcessEventAsync(SocketFrame frame)
@@ -46,6 +61,19 @@ namespace CCBrainz.ComputerCraft
                 {
                     Console.Error.WriteLine(task.Exception);
                 }
+            }
+
+            if(frame.OpCode == ReservedOpCodes.CommandResponse)
+            {
+                var result = frame.GetPayload<CommandResponse>();
+
+                var command = ActiveCommands.FirstOrDefault(x => x.CommandNonse == result.CommandNonse);
+
+                if (command == null)
+                    return;
+
+                command.SetResult(command.Payload);
+                ActiveCommands.Remove(command);
             }
         }
         public async Task ProcessBinaryAsync(byte[] frame, bool endOfMessage)

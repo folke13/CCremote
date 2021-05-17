@@ -111,7 +111,7 @@ namespace CCBrainz.Http.Websocket
             Console.WriteLine($"New {client.ConnectionType} client: {client.MinecraftUser}");
             client.SendAsync(new SocketFrame()
             {
-                OpCode = OpCode.HelloAccepted,
+                OpCode = ReservedOpCodes.HelloAccepted,
             }).GetAwaiter().GetResult();
             Clients.Add(client);
             _ = Task.Run(async () => await HandleClient(client).ConfigureAwait(false));
