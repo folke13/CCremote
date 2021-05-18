@@ -1,7 +1,11 @@
 ﻿using CCBrainz.ComputerCraft.API;
+using CCBrainz.ComputerCraft.API.Events;
+using CCBrainz.ComputerCraft.Entities.Inventory;
+using CCBrainz.Mongo.Entities;
 using CCBrainz.Websocket.Net;
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Net.WebSockets;
 using System.Text;
 using System.Threading.Tasks;
@@ -10,11 +14,65 @@ namespace CCBrainz.ComputerCraft
 {
     public class Turtle : BaseComputerCraftClient
     {
+        public event Func<Inventory, Task> InventoryUpdated;
+
+        public Location Location;
+
+        public Inventory Inventory { get; }
+
+        private TurtleData DatabaseTurtle { get; }
+
         public Turtle(HttpListenerWebSocketContext context, ComputercraftHello hello)
             : base(context, hello)
         {
+            this.MessageRecieved += Turtle_MessageRecieved;
+            Inventory = new Inventory(16, this);
+
+            DatabaseTurtle = TurtleData.Get(this.ComputerId);
+
+            if(DatabaseTurtle != null)
+            {
+
+            }
+
+            // try to get our location
+            var location = this.TryGetGPSLocation().GetAwaiter().GetResult();
+
+            if (location != null)
+                this.Location = location;
+            else if(DatabaseTurtle != null && DatabaseTurtle.LastPosition != null)
+            {
+                this.Location = DatabaseTurtle.LastPosition;
+            }
 
         }
+
+        private async Task Turtle_MessageRecieved(SocketMessage arg)
+        {
+            switch (arg.OpCode)
+            {
+                case CCOpCode.Event:
+                    var parsedPayload = arg.ToType<InventoryUpdated>();
+                    Inventory.Update(parsedPayload);
+                    var task = InventoryUpdated?.Invoke(this.Inventory);
+
+                    if (task != null)
+                    {
+                        await task;
+                        if (task.Exception != null)
+                            Console.Error.WriteLine(task.Exception);
+                    }
+
+                    break;
+            }
+        }
+
+        #region gps
+
+        public Task<Location> TryGetGPSLocation()
+            => base.SendCommandAsync<Location>(CCOpCode.GPSLocate);
+
+        #endregion
 
         #region Crafting
 
@@ -72,19 +130,19 @@ namespace CCBrainz.ComputerCraft
         #region Dropping Items
 
         public Task<DropResult> DropForward()
-          => Drop(RelativeDirection.Forward);
+            => Drop(RelativeDirection.Forward);
 
         public Task<DropResult> DropForward(int count)
             => Drop(RelativeDirection.Forward, count);
 
         public Task<DropResult> DropDown()
-           => Drop(RelativeDirection.Down);
+            => Drop(RelativeDirection.Down);
 
         public Task<DropResult> DropDown(int count)
             => Drop(RelativeDirection.Down, count);
 
         public Task<DropResult> DropUp()
-           => Drop(RelativeDirection.Up);
+            => Drop(RelativeDirection.Up);
 
         public Task<DropResult> DropUp(int count)
             => Drop(RelativeDirection.Up, count);
@@ -135,6 +193,7 @@ namespace CCBrainz.ComputerCraft
         #endregion Placing
 
         #region Digging
+
         public Task<DigResult> DigForward()
             => Dig(RelativeDirection.Forward);
 
@@ -146,6 +205,7 @@ namespace CCBrainz.ComputerCraft
 
         public Task<DigResult> Dig(RelativeDirection direction)
             => base.SendCommandAsync<DigResult>(CCOpCode.Dig, direction);
+
         #endregion Digging
 
         #region Attack
@@ -192,6 +252,11 @@ namespace CCBrainz.ComputerCraft
         public Task<EquipResult> EquipRight()
             => base.SendCommandAsync<EquipResult>(CCOpCode.Equip, Direction.Right);
 
+        public Task<EquipResult> EquipLeft(ToolSide side)
+            => base.SendCommandAsync<EquipResult>(CCOpCode.Equip, Direction.Left);
+        public Task<EquipResult> EquipRight(ToolSide side)
+            => base.SendCommandAsync<EquipResult>(CCOpCode.Equip, Direction.Right);
+
         public Task<TransferResult> TransferTo(int slot)
             => base.SendCommandAsync<TransferResult>(CCOpCode.TransferTo, slot);
 
@@ -201,6 +266,7 @@ namespace CCBrainz.ComputerCraft
         #endregion Inventory
 
         #region Inspect
+
         public Task<InspectResult> InspectUp()
             => Inspect(RelativeDirection.Up);
         public Task<InspectResult> InspectDown()
@@ -209,15 +275,12 @@ namespace CCBrainz.ComputerCraft
             => Inspect(RelativeDirection.Forward);
 
         public Task<InspectResult> Inspect(RelativeDirection Direction)
-        {
-            return base.SendCommandAsync<InspectResult>(CCOpCode.Inspect, new
-            {
-                direction = Direction
-            });
-        }
+            => base.SendCommandAsync<InspectResult>(CCOpCode.Inspect, Direction);
+
         #endregion Inspect
 
         #region Movement
+
         public Task<MoveResult> MoveForward()
             => Move(Direction.Forward);
         public Task<MoveResult> MoveBack()
@@ -232,23 +295,27 @@ namespace CCBrainz.ComputerCraft
             => Move(Direction.Up);
 
         public Task<MoveResult> Move(Direction direction)
-        {
-            return base.SendCommandAsync<MoveResult>(CCOpCode.Move, new
-            {
-                direction = direction
-            });
-        }
+            => base.SendCommandAsync<MoveResult>(CCOpCode.Move, direction);
+
         #endregion Movement
 
         #region Fuel
+
         public Task<int> GetFuelLimit()
-            => base.SendCommandAsync<int>(CCOpCode.GetFuelLimit, null);
+            => base.SendCommandAsync<int>(CCOpCode.GetFuelLimit);
         public Task<int> GetFuelLevel()
-            => base.SendCommandAsync<int>(CCOpCode.GetFuelLevel, null);
+            => base.SendCommandAsync<int>(CCOpCode.GetFuelLevel);
 
         public Task<RefuelResult> Refuel()
-            => base.SendCommandAsync<RefuelResult>(CCOpCode.Refuel, null);
+            => base.SendCommandAsync<RefuelResult>(CCOpCode.Refuel);
+
         #endregion Fuel
+    }
+
+    public enum ToolSide
+    {
+        Left,
+        Right
     }
 
     public enum RelativeDirection

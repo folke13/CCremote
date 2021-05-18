@@ -7,10 +7,10 @@ namespace CCBrainz.ComputerCraft.API
 {
     public class TransferResult
     {
-        [JsonProperty("nonse")]
-        public string CommandNonse { get; set; }
+        [JsonProperty("success")]
+        public bool Success { get; set; }
 
-        [JsonProperty("result")]
-        public object Result { get; set; }
+        [JsonProperty("error")]
+        public string Error { get; set; }
     }
 }

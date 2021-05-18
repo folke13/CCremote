@@ -27,13 +27,22 @@ namespace CCBrainz.ComputerCraft
         public void SetResult(object obj)
             => _resultSource.SetResult(obj);
 
-        public async Task<T> GetResult<T>() 
+        public async Task<CompletionResult<T>> GetResult<T>(int timeout = 2000) 
         {
-            var result = await _resultSource.Task;
+            var resultTask = _resultSource.Task;
 
             try
             {
-                return (result as JToken).ToObject<T>();
+                if (await Task.WhenAny(resultTask, Task.Delay(timeout)) == resultTask)
+                {
+                    var result = (resultTask.Result as JToken).ToObject<T>();
+
+                    return CompletionResult<T>.FromComplete(result);
+                }
+                else
+                {
+                    return CompletionResult<T>.Empty;
+                }
             }
             catch(Exception x)
             {
@@ -55,5 +64,40 @@ namespace CCBrainz.ComputerCraft
                 }
             };
         }
+    }
+
+    public class CompletionResult<T>
+    {
+        public bool Completed { get; }
+
+        public T Value 
+        {
+            get
+            {
+                if (!Completed)
+                    throw new ArgumentNullException("Value is null!");
+                else return _value;
+            }
+        }
+
+        private T _value { get; }
+
+        public CompletionResult(bool completed)
+        {
+            this.Completed = completed;
+        }
+
+        public CompletionResult(bool completed, T value)
+        {
+            this.Completed = completed;
+            this._value = value;
+        }
+
+
+        internal static CompletionResult<T> FromComplete(T Value)
+            => new CompletionResult<T>(true, Value);
+
+        internal static CompletionResult<T> Empty
+            => new CompletionResult<T>(false);
     }
 }

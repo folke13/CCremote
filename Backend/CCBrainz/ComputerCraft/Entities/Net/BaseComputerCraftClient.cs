@@ -30,6 +30,7 @@ namespace CCBrainz.ComputerCraft
            => MinecraftUser != null;
 
         private List<AsyncCommand> ActiveCommands = new List<AsyncCommand>();
+        private Dictionary<string, TaskCompletionSource<object[]>> ActiveBatchCommands = new Dictionary<string, TaskCompletionSource<object[]>>();
 
         public BaseComputerCraftClient(HttpListenerWebSocketContext context, ComputercraftHello hello)
         {
@@ -39,7 +40,7 @@ namespace CCBrainz.ComputerCraft
             this.ComputerId = hello.ComputerId;
         }
 
-        public Task<TResult> SendCommandAsync<TResult>(CCOpCode code, object payload = null) 
+        public async Task<TResult> SendCommandAsync<TResult>(CCOpCode code, object payload = null)
         {
             var command = new AsyncCommand(code, payload);
 
@@ -47,7 +48,54 @@ namespace CCBrainz.ComputerCraft
 
             ActiveCommands.Add(command);
 
-            return command.GetResult<TResult>();
+            var result = await command.GetResult<TResult>();
+
+            return result.Completed ? result.Value : GetCustomDefault<TResult>();
+        }
+
+        public async Task<object[]> SendBatchCommandsAsync(params (CCOpCode code, object payload)[] commands)
+        {
+            List<AsyncCommand> asyncCommands = new List<AsyncCommand>();
+
+            foreach(var item in commands)
+            {
+                asyncCommands.Add(new AsyncCommand(item.code, item.payload));
+            }
+
+            var id = asyncCommands.First().CommandNonse;
+            SocketFrame BatchSocketFrame = new SocketFrame()
+            {
+                OpCode = ReservedOpCodes.BatchCommand,
+                Payload = new
+                {
+                    id = id,
+                    cmds = asyncCommands.Select(x => x.Payload).ToArray()
+                }
+            };
+
+            var source = new TaskCompletionSource<object[]>();
+
+            ActiveBatchCommands.Add(id, source);
+
+            await SendAsync(BatchSocketFrame);
+
+            var result = await Task.WhenAny(source.Task, Task.Delay(5000));
+
+            if (result == source.Task)
+            {
+                return source.Task.Result;
+            }
+            else return null;
+        }
+
+        private TResult GetCustomDefault<TResult>()
+        {
+            var type = typeof(TResult);
+
+            if (type == typeof(int))
+                return (TResult)((object)-1);
+
+            else return default(TResult);
         }
 
         public async Task ProcessEventAsync(SocketFrame frame)
@@ -74,6 +122,17 @@ namespace CCBrainz.ComputerCraft
 
                 command.SetResult(command.Payload);
                 ActiveCommands.Remove(command);
+            }
+            else if(frame.OpCode == ReservedOpCodes.BatchCommandResult)
+            {
+                var result = frame.GetPayload<CommandResponse>();
+                var command = ActiveBatchCommands.FirstOrDefault(x => x.Key == result.CommandNonse);
+
+                if (command.Key == null)
+                    return;
+
+                command.Value.SetResult((object[])result.Result);
+                ActiveBatchCommands.Remove(command.Key);
             }
         }
         public async Task ProcessBinaryAsync(byte[] frame, bool endOfMessage)

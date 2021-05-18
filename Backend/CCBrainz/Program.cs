@@ -1,4 +1,5 @@
-﻿using CCBrainz.Http.Websocket;
+﻿using CCBrainz.ComputerCraft;
+using CCBrainz.Http.Websocket;
 using System;
 using System.Threading.Tasks;
 
@@ -15,8 +16,20 @@ namespace CCBrainz
         {
             var server = new WebSocketServer(3000);
 
+            server.OnTurtleConnected += Server_OnTurtleConnected;
 
             await Task.Delay(-1);
+        }
+
+        private async Task Server_OnTurtleConnected(Turtle arg)
+        {
+            Console.WriteLine($"Turtle {arg.ComputerId} Connected!");
+            arg.InventoryUpdated += Arg_InventoryUpdated;
+        }
+
+        private async Task Arg_InventoryUpdated(ComputerCraft.Entities.Inventory.Inventory arg)
+        {
+            await arg.Owner.MoveForward();
         }
     }
 }

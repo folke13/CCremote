@@ -6,6 +6,18 @@ namespace CCBrainz.ComputerCraft
 {
     public enum CCOpCode
     {
+        #region Reserved
+        Hello = 0,
+        HelloAccepted = 1,
+        Eval = 2,
+        EvalResponse = 3,
+        Command = 4,
+        CommandResponse = 5,
+        BatchCommand = 6,
+        BatchCommandResult = 7,
+        Event = 8,
+        #endregion
+
         #region Turtle
         Move = 12,
         Select = 13,
@@ -27,7 +39,8 @@ namespace CCBrainz.ComputerCraft
         GetFuelLevel = 29,
         GetFuelLimit = 30,
         TransferTo = 31,
-        Craft = 32
+        Craft = 32,
+        GPSLocate = 33,
         #endregion Turtle
     }
 }
