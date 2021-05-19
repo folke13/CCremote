@@ -1,5 +1,6 @@
 ﻿using CCBrainz.ComputerCraft;
 using CCBrainz.Http.Websocket;
+using CCBrainz.Mining;
 using System;
 using System.Threading.Tasks;
 
@@ -29,7 +30,7 @@ namespace CCBrainz
 
         private async Task Arg_InventoryUpdated(ComputerCraft.Entities.Inventory.Inventory arg)
         {
-            await arg.Owner.MoveForward();
+            await MineLogic.MineSection(arg.Owner, 6);
         }
     }
 }

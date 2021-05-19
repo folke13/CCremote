@@ -3,6 +3,7 @@ using CCBrainz.Http;
 using CCBrainz.Http.Websocket.Entitites;
 using CCBrainz.Websocket.Net;
 using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -30,7 +31,7 @@ namespace CCBrainz.ComputerCraft
            => MinecraftUser != null;
 
         private List<AsyncCommand> ActiveCommands = new List<AsyncCommand>();
-        private Dictionary<string, TaskCompletionSource<object[]>> ActiveBatchCommands = new Dictionary<string, TaskCompletionSource<object[]>>();
+        private Dictionary<string, TaskCompletionSource<object>> ActiveBatchCommands = new Dictionary<string, TaskCompletionSource<object>>();
 
         public BaseComputerCraftClient(HttpListenerWebSocketContext context, ComputercraftHello hello)
         {
@@ -43,7 +44,7 @@ namespace CCBrainz.ComputerCraft
         public async Task<TResult> SendCommandAsync<TResult>(CCOpCode code, object payload = null)
         {
             var command = new AsyncCommand(code, payload);
-
+                
             SendAsync(command.ToSocketFrame()).GetAwaiter().GetResult();
 
             ActiveCommands.Add(command);
@@ -53,11 +54,14 @@ namespace CCBrainz.ComputerCraft
             return result.Completed ? result.Value : GetCustomDefault<TResult>();
         }
 
-        public async Task<object[]> SendBatchCommandsAsync(params (CCOpCode code, object payload)[] commands)
+        public Task<List<object>> SendBatchCommandsAsync(params (CCOpCode code, object payload)[] commands)
+            => SendBatchCommandsAsync<List<object>>(commands);
+
+        public async Task<TResult> SendBatchCommandsAsync<TResult>(params (CCOpCode code, object payload)[] commands) where TResult : class
         {
             List<AsyncCommand> asyncCommands = new List<AsyncCommand>();
 
-            foreach(var item in commands)
+            foreach (var item in commands)
             {
                 asyncCommands.Add(new AsyncCommand(item.code, item.payload));
             }
@@ -69,11 +73,11 @@ namespace CCBrainz.ComputerCraft
                 Payload = new
                 {
                     id = id,
-                    cmds = asyncCommands.Select(x => x.Payload).ToArray()
+                    cmds = asyncCommands.Select(x => new { op = x.OpCode, nonse = x.CommandNonse, args = x.Payload}).ToArray()
                 }
             };
 
-            var source = new TaskCompletionSource<object[]>();
+            var source = new TaskCompletionSource<object>();
 
             ActiveBatchCommands.Add(id, source);
 
@@ -83,7 +87,7 @@ namespace CCBrainz.ComputerCraft
 
             if (result == source.Task)
             {
-                return source.Task.Result;
+                return (source.Task.Result as JToken).ToObject<TResult>();
             }
             else return null;
         }

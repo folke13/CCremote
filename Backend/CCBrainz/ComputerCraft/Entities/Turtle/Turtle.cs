@@ -28,12 +28,12 @@ namespace CCBrainz.ComputerCraft
             this.MessageRecieved += Turtle_MessageRecieved;
             Inventory = new Inventory(16, this);
 
-            DatabaseTurtle = TurtleData.Get(this.ComputerId);
+            //DatabaseTurtle = TurtleData.Get(this.ComputerId);
 
-            if(DatabaseTurtle != null)
-            {
+            //if(DatabaseTurtle != null)
+            //{
 
-            }
+            //}
 
             // try to get our location
             var location = this.TryGetGPSLocation().GetAwaiter().GetResult();

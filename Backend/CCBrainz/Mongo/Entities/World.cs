@@ -22,7 +22,7 @@ namespace CCBrainz.Mongo.Entities
             var turtleData = new TurtleData()
             {
                 Id = turtle.ComputerId,
-                Label = turtle.lab
+                //Label = turtle.lab
             };
         }
     }
